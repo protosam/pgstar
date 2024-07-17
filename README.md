@@ -105,6 +105,48 @@ This only covers the built-ins available in PGStar. The language specification i
 ## pgstar/db
 ```starlark
 load("pgstar/db", db="exports")
+
+# selecting a specific row
+rows, err = db.query("SELECT * FROM testtable WHERE name = $1", ["alice"])
+if err != None:
+    pass # TODO: Handle error
+
+# iterate all selected rows
+for row in rows:
+    print(row)
+
+# automatic savepointing can be enabled to automate rollbacks
+# errors can not be handled without this enabled
+db.savepoints(True)
+
+# simple query example
+rows, err = db.query("SELECT * FROM testtable2", [])
+if err != None:
+    pass # TODO: Handle error
+
+# iterate all selected rows
+for row in rows:
+    print(row)
+
+# create a savepoint
+_, err = db.exec("SAVEPOINT my_savepoint", [])
+if err != None:
+    pass # TODO: Handle error
+
+# inserting after a savepoint can be handled
+rows_affected, err = db.exec("INSERT INTO testtable2 (name, comment) VALUES ($1, $2)", ["alice", "learned to love cryptography"])
+if err != None:
+    _, err = db.exec("ROLLBACK TO SAVEPOINT my_savepoint", [])
+    if err != None:
+        pass # TODO: Handle error
+
+# release a savepoint
+_, err = db.exec("RELEASE SAVEPOINT my_savepoint", [])
+if err != None:
+    pass # TODO: Handle error
+
+# how many rows were affected?
+print(rows_affected)
 ```
 ## pgstar/http
 ```starlark
