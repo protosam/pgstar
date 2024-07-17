@@ -10,15 +10,15 @@ import (
 	"github.com/protosam/pgstar/executor/modules/encoding/modbase64"
 	"github.com/protosam/pgstar/executor/modules/encoding/modhex"
 	"github.com/protosam/pgstar/executor/modules/encoding/modjson"
-	"github.com/protosam/pgstar/executor/modules/moddb"
 	"github.com/protosam/pgstar/executor/modules/modhttp"
 	"github.com/protosam/pgstar/executor/modules/modmath"
+	"github.com/protosam/pgstar/executor/modules/modpostgres"
 	"github.com/protosam/pgstar/executor/modules/modregex"
 	"github.com/protosam/pgstar/executor/modules/modtime"
 )
 
 var Modules = map[string]modules.ModuleExporterFn{
-	"pgstar/db":              moddb.Constructor,
+	"pgstar/postgres":        modpostgres.Constructor,
 	"pgstar/http":            modhttp.Constructor,
 	"pgstar/math":            modmath.Constructor,
 	"pgstar/time":            modtime.Constructor,
