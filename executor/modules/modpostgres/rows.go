@@ -72,6 +72,8 @@ func (it *Row) Next(p *starlark.Value) bool {
 			case fmt.Stringer:
 				slvals.SetKey(starlark.String(it.fields[idx]), starlark.String(fmt.Sprintf("%s", values[idx])))
 				log.Printf("failed back to Sprintf for type in db.rows.next(): %#v", values[idx])
+			case nil:
+				slvals.SetKey(starlark.String(it.fields[idx]), starlark.None)
 			default:
 				// slvals.Append(starlark.None)
 				slvals.SetKey(starlark.String(it.fields[idx]), starlark.None)
