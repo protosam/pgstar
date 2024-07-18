@@ -23,12 +23,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
 
-    - name: Source BUILD_ENV variables
-      run: source BUILD_ENV
-
-    - name: Test
-      run: echo ${PGSTAR_VERSION}
-
     # Login against a Docker registry except on PR
     # https://github.com/docker/login-action
     - name: Log into registry ${{ env.REGISTRY }}
@@ -48,6 +42,7 @@ jobs:
     # https://github.com/docker/metadata-action
     - name: Extract Docker metadata
       id: meta
+      #if: ${{GITHUB_REF_TYPE}} == 'tag'
       uses: docker/metadata-action@v4.1.1
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -58,12 +53,13 @@ jobs:
           prefix=
           suffix=
         tags: |
-          type=semver,pattern={{raw}},value=${PGSTAR_VERSION}
+          type=semver,pattern={{raw}},value=${{GITHUB_REF_NAME}}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Build and push
+      #if: ${{GITHUB_REF_TYPE}} == 'tag'
       uses: docker/build-push-action@v3
       with:
         context: .
