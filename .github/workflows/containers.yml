@@ -26,6 +26,9 @@ jobs:
     - name: Source BUILD_ENV variables
       run: source ${GITHUB_WORKSPACE}/BUILD_ENV
 
+    - name: Test
+      run: echo ${PGSTAR_VERSION}
+
     # Login against a Docker registry except on PR
     # https://github.com/docker/login-action
     - name: Log into registry ${{ env.REGISTRY }}
