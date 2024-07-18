@@ -47,18 +47,16 @@ func (loader *ModuleLoader) NewChild(module string) *ModuleLoader {
 // Load handles loading script modules
 func (loader *ModuleLoader) Load(thread *starlark.Thread, modulePath string) (starlark.StringDict, error) {
 	if _, ok := Modules[modulePath]; ok {
-		module, err := Modules[modulePath](loader)
-		if err != nil {
-			return nil, err
+		if _, ok := loader.localizedStates[modulePath]; !ok {
+			module, err := Modules[modulePath](loader)
+			loader.localizedStates[modulePath] = module
+			if err != nil {
+				return nil, err
+			}
+
 		}
 
-		name := module.Name()
-
-		if _, ok := loader.localizedStates[name]; !ok {
-			loader.localizedStates[name] = module
-		}
-
-		return loader.localizedStates[name].Exports(), nil
+		return loader.localizedStates[modulePath].Exports(), nil
 	}
 
 	// fallback to using another starlark script as the module

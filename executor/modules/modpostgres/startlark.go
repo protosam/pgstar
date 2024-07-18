@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
-	"github.com/jackc/pgx/v5"
 	"go.starlark.net/starlark"
 )
 
@@ -37,8 +36,7 @@ func pgargsToStarlarkValue(_ *starlark.Thread, fn *starlark.Builtin, pgargs *sta
 	return params
 }
 
-func parseRow(rows pgx.Rows, fields []string) *starlark.Dict {
-	values, _ := rows.Values()
+func parseRow(values []any, fields []string) *starlark.Dict {
 	// slvals := starlark.NewList(nil)
 	slvals := starlark.NewDict(0)
 	for idx := range values {

@@ -149,7 +149,8 @@ func (module *Module) first(thread *starlark.Thread, fn *starlark.Builtin, args 
 	defer rows.rows.Close()
 
 	if rows.rows.Next() {
-		return parseRow(rows.rows, rows.fields), nil
+		values, _ := rows.rows.Values()
+		return parseRow(values, rows.fields), nil
 	}
 
 	return starlark.None, nil
