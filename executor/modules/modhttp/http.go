@@ -21,8 +21,9 @@ const (
 )
 
 type Module struct {
-	w http.ResponseWriter
-	r *http.Request
+	w          http.ResponseWriter
+	r          *http.Request
+	cachedData map[string]starlark.Value
 }
 
 func Constructor(loader modules.ModuleLoader) (modules.LocalizedModule, error) {
@@ -35,8 +36,9 @@ func Constructor(loader modules.ModuleLoader) (modules.LocalizedModule, error) {
 		return nil, err
 	}
 	return &Module{
-		w: *w,
-		r: r,
+		w:          *w,
+		r:          r,
+		cachedData: make(map[string]starlark.Value),
 	}, nil
 }
 
@@ -206,6 +208,10 @@ func (module *Module) HTTPPostFn(thread *starlark.Thread, fn *starlark.Builtin, 
 		return starlark.None, err
 	}
 
+	if _, ok := module.cachedData["postdata"]; ok {
+		return module.cachedData["postdata"], nil
+	}
+
 	switch module.r.Header.Get("Content-Type") {
 	case "application/json":
 		rawpost, _ := io.ReadAll(module.r.Body)
@@ -213,7 +219,9 @@ func (module *Module) HTTPPostFn(thread *starlark.Thread, fn *starlark.Builtin, 
 		if err != nil {
 			return starlark.None, errors.New("invalid json request")
 		}
-		return postdata, nil
+
+		module.cachedData["postdata"] = postdata
+		return module.cachedData["postdata"], nil
 	case "multipart/form-data":
 		// TODO: Implement
 		log.Printf("multipart form data is not supported")
@@ -232,7 +240,9 @@ func (module *Module) HTTPPostFn(thread *starlark.Thread, fn *starlark.Builtin, 
 			}
 			postdata.SetKey(starlark.String(key), values)
 		}
-		return postdata, nil
+
+		module.cachedData["postdata"] = postdata
+		return module.cachedData["postdata"], nil
 	}
 }
 
