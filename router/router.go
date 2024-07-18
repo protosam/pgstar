@@ -12,8 +12,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/protosam/pgstar/executor"
 	"github.com/protosam/pgstar/executor/modules"
-	"github.com/protosam/pgstar/executor/modules/moddb"
 	"github.com/protosam/pgstar/executor/modules/modhttp"
+	"github.com/protosam/pgstar/executor/modules/modpostgres"
 	"go.starlark.net/starlark"
 )
 
@@ -59,7 +59,7 @@ func withStarlark(rootdir, starfile string, globals map[string]starlark.Value) f
 
 		thread := executor.NewManagedThread(rootdir, starfile)
 		moduleloader := executor.NewModuleLoader(thread, thread.GetRootdir(), thread.GetStarfile())
-		moduleloader.SetState(moddb.StateNameDBPool, dbpool)
+		moduleloader.SetState(modpostgres.StateNameDBPool, dbpool)
 		moduleloader.SetState(modhttp.StateNameReader, r)
 		moduleloader.SetState(modhttp.StateNameWriter, &w)
 		thread.SetModuleLoader(moduleloader)
