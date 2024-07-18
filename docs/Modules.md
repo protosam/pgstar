@@ -253,7 +253,7 @@ jsonData, err = json.decode(jsonString)
 ```
 ## pgstar/encoding/yaml
 ```starlark
-load("pgstar/encoding/json", json="exports")
+load("pgstar/encoding/yaml", yaml="exports")
 
 yamlString, err = yaml.encode(data)
 yamlData, err = yaml.decode(yamlString)
