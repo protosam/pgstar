@@ -23,7 +23,7 @@ func (module *Module) Exports() starlark.StringDict {
 		"exports": starlarkstruct.FromStringDict(
 			starlark.String(ModuleName),
 			starlark.StringDict{
-				"match": starlark.NewBuiltin("sha256", match),
+				"match": starlark.NewBuiltin("regex.match", match),
 			},
 		),
 	}
