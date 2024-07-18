@@ -113,14 +113,20 @@ exampleFormatting="2006-01-02 15:04:05 MST"
 # get the time in unix time
 unixTimeNow = time.now()
 
-# format a unix timestamp with a specific formatting for specific timezone
-time.timezone(unixTimeNow, exampleFormatting, "America/New_York")
-
 # format a unix time into string
-exampleTimeString = time.format(unixTimeNow, exampleFormatting)
+exampleTimeString, err = time.format(unixTimeNow, exampleFormatting)
+if err != None:
+    fail(err)
+
+# format a unix timestamp into a string in specific timezone
+exampleTimeInZoneString, err = time.format(unixTimeNow, exampleFormatting, "America/New_York")
+if err != None:
+    fail(err)
 
 # convert a string to epoch
-unixTimeAgain = time.epoch(exampleTimeString, exampleFormatting)
+unixTimeAgain, err = time.epoch(exampleTimeString, exampleFormatting)
+if err != None:
+    fail(err)
 ```
 ## pgstar/math
 

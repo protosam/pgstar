@@ -1,6 +1,7 @@
 package modtime
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/protosam/pgstar/executor/modules"
@@ -23,10 +24,9 @@ func (module *Module) Exports() starlark.StringDict {
 		"exports": starlarkstruct.FromStringDict(
 			starlark.String(ModuleName),
 			starlark.StringDict{
-				"now":      starlark.NewBuiltin("time.now", now),
-				"format":   starlark.NewBuiltin("time.format", format),
-				"epoch":    starlark.NewBuiltin("time.epoch", epoch),
-				"timezone": starlark.NewBuiltin("time.timezone", timezone),
+				"now":    starlark.NewBuiltin("time.now", now),
+				"format": starlark.NewBuiltin("time.format", format),
+				"epoch":  starlark.NewBuiltin("time.epoch", epoch),
 
 				// Just pass along the convenience strings
 				"Layout":      starlark.String(time.Layout),
@@ -70,11 +70,37 @@ func now(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwa
 func format(_ *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var formatStr string
 	var epoch int64
-	if err := starlark.UnpackPositionalArgs(fn.Name(), args, kwargs, 2, &epoch, &formatStr); err != nil {
+	var timezone string
+	if err := starlark.UnpackArgs(fn.Name(), args, kwargs, "epoch", &epoch, "formatStr", &formatStr, "timezone?", &timezone); err != nil {
 		return starlark.None, err
 	}
 
-	return starlark.String(time.Unix(epoch, 0).UTC().Format(formatStr)), nil
+	if len(args) < 2 {
+		return nil, fmt.Errorf("%s: unexpected keyword argument x", fn.Name())
+	}
+
+	timestamp := time.Unix(epoch, 0)
+
+	if timezone != "" {
+		// Load a location (time zone)
+		location, err := time.LoadLocation(timezone)
+		if err != nil {
+			return starlark.Tuple{
+				starlark.None,
+				starlark.String(fmt.Sprintf("%s", err)),
+			}, nil
+		}
+
+		return starlark.Tuple{
+			starlark.String(timestamp.In(location).Format(formatStr)),
+			starlark.None,
+		}, nil
+	}
+
+	return starlark.Tuple{
+		starlark.String(timestamp.UTC().Format(formatStr)),
+		starlark.None,
+	}, nil
 }
 
 func epoch(_ *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -85,29 +111,14 @@ func epoch(_ *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs
 
 	timestamp, err := time.Parse(formatStr, timestampStr)
 	if err != nil {
-		return starlark.None, err
+		return starlark.Tuple{
+			starlark.None,
+			starlark.String(fmt.Sprintf("%s", err)),
+		}, nil
 	}
 
-	return starlark.MakeInt64(timestamp.UTC().Unix()), nil
-}
-
-func timezone(_ *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	var timestampStr, formatStr, timezone string
-	if err := starlark.UnpackPositionalArgs(fn.Name(), args, kwargs, 3, &timestampStr, &formatStr, &timezone); err != nil {
-		return starlark.None, err
-	}
-
-	// Load a location (time zone)
-	location, err := time.LoadLocation(timezone)
-	if err != nil {
-		return starlark.None, err
-	}
-
-	timestamp, err := time.Parse(formatStr, timestampStr)
-	if err != nil {
-		return starlark.None, err
-	}
-
-	// return starlark.String(timestamp.In(location).Format(formatStr)), nil
-	return starlark.String(timestamp.In(location).Format(formatStr)), nil
+	return starlark.Tuple{
+		starlark.MakeInt64(timestamp.UTC().Unix()),
+		starlark.None,
+	}, nil
 }
