@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/protosam/pgstar/executor/modules"
+	"github.com/protosam/pgstar/executor/modules/starutils"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
@@ -77,12 +78,11 @@ func (module *Module) HTTPWriterFn(thread *starlark.Thread, fn *starlark.Builtin
 
 	module.w.WriteHeader(statuscode)
 
-	sljson, err := MarshalValueToJson(data)
+	sljson, err := starutils.StarlarkJsonEncoder(data)
 	if err != nil {
 		return starlark.None, err
 	}
-	resp, _ := starlark.AsString(sljson)
-	module.w.Write([]byte(resp))
+	module.w.Write([]byte(sljson))
 	return starlark.None, modules.ErrEarlyExit
 
 }
@@ -209,7 +209,7 @@ func (module *Module) HTTPPostFn(thread *starlark.Thread, fn *starlark.Builtin, 
 	switch module.r.Header.Get("Content-Type") {
 	case "application/json":
 		rawpost, _ := io.ReadAll(module.r.Body)
-		postdata, err := UnmarshalJsonToValue(string(rawpost))
+		postdata, err := starutils.StarlarkJsonDecoder(string(rawpost), starlark.None)
 		if err != nil {
 			return starlark.None, errors.New("invalid json request")
 		}
