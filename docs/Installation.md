@@ -29,7 +29,7 @@ Here is the full list of environment variables available for the `pgstar` comman
 ## Building
 This project requires Go to be built.
 ```
-go build github.com/protosam/pgstar -o pgstard
+go build github.com/protosam/pgstar/server -o pgstard
 ```
 
 ## Docker Containers
