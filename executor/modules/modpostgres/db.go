@@ -51,6 +51,7 @@ func (module *Module) Exports() starlark.StringDict {
 			starlark.StringDict{
 				"savepoints": starlark.NewBuiltin("db.savepoints", module.savepoints),
 				"query":      starlark.NewBuiltin("db.query", module.query),
+				"first":      starlark.NewBuiltin("db.first", module.first),
 				"exec":       starlark.NewBuiltin("db.exec", module.exec),
 			},
 		),
@@ -137,6 +138,21 @@ func (module *Module) query(thread *starlark.Thread, fn *starlark.Builtin, args 
 	}
 
 	return &starlark.Tuple{slrows, starlark.None}, nil
+}
+
+func (module *Module) first(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	var rows *Rows
+	if err := starlark.UnpackArgs(fn.Name(), args, kwargs, "rows", &rows); err != nil {
+		return starlark.None, err
+	}
+
+	defer rows.rows.Close()
+
+	if rows.rows.Next() {
+		return parseRow(rows.rows, rows.fields), nil
+	}
+
+	return starlark.None, nil
 }
 
 func (module *Module) exec(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
