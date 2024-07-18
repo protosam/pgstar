@@ -45,6 +45,7 @@ http.write(200, name)
 
 For testing, `pgstar exec` performs evaluation for a path in your CLI.
 ```shell
+pgstar exec ./config.star GET /ping
 pgstar exec ./config.star GET /hellodb/bob/extra/pathing/here
 ```
 
