@@ -54,7 +54,7 @@ func main(c *cli.Context) error {
 	PGSTAR_POSTGRES_CONFIG := c.String("postgres-config")
 	noPrint := c.Bool("no-print")
 	jsonDataStr := c.String("json-data")
-	headers := c.StringSlice("headers")
+	headers := c.StringSlice("header")
 	starfile := c.Args().Get(0)
 	method := c.Args().Get(1)
 	path := c.Args().Get(2)
