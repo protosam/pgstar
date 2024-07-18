@@ -37,6 +37,8 @@ func NewManagedThread(rootdir, starfile string) *ManagedThread {
 		rootdir:     rootdir,
 	}
 
+	mt.Predeclare("Struct", starlark.NewBuiltin("Struct", MakeStruct))
+
 	// mt.moduleLoader = NewModuleLoader(mt, rootdir, starfile)
 	return mt
 }
