@@ -17,19 +17,10 @@ export PGSTAR_POSTGRES_CONFIG="host=localhost port=5433 user=yugabyte password=y
 
 Now you should be prepared to check out the hello world example [here](HelloWorld.md).
 
-## Environment Variables
-Here is the full list of environment variables available for the `pgstar` command.
-- `PGSTAR_BIND_ADDR` - Network interface and port to listen on.
-- `PGSTAR_POSTGRES_CONFIG` - Database connection arguments.
-- `PGSTAR_SSL_CERTIFICATE` - Optional, provides SSL certificate path to enable SSL.
-- `PGSTAR_SSL_PRIVATE_KEY` - Optional, provides SSL key path to enable SSL.
-
-
-
 ## Building
 Build with Go locally.
 ```shell
-go build -o pgstar github.com/protosam/pgstar/server
+go build -o pgstar github.com/protosam/pgstar/cli
 ```
 
 Building a container.
@@ -40,5 +31,5 @@ docker build . -t <TAGNAME_HERE>
 ## Docker Containers
 Docker containers are available and tagged by version.
 ```shell
-docker pull ghcr.io/protosam/pgstar:v0.0.1-alpha
+docker pull ghcr.io/protosam/pgstar:v0.0.2-alpha
 ```

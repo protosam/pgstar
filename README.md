@@ -31,7 +31,6 @@ Instructions can be found in the `docs/` directory.
 ## Development Plan Notes
 These are things slated to be added to PGStar.
 
-- Implement CLI tooling to simply scripts without web service
 - Implement package management system (using git repos)
 - - Versioning structure
 - - Caching mechanisms

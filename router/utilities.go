@@ -21,8 +21,8 @@ func SetDBPool(pool *pgxpool.Pool) {
 	dbpool = pool
 }
 
-// WithStarlark returns an http handler function that runs a starlark script
-func WithStarlark(rootdir, starfile string, globals map[string]starlark.Value) func(http.ResponseWriter, *http.Request) {
+// WithStarlarkHandler returns an http handler function that runs a starlark script
+func WithStarlarkHandler(rootdir, starfile string, globals map[string]starlark.Value, opts ...WithOption) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -35,6 +35,10 @@ func WithStarlark(rootdir, starfile string, globals map[string]starlark.Value) f
 
 		for name, value := range globals {
 			thread.Predeclare(name, value)
+		}
+
+		for i := range opts {
+			opts[i].Apply(thread)
 		}
 
 		defer moduleloader.Destroy()

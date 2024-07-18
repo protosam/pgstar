@@ -1,44 +1,65 @@
-package main
+package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/protosam/pgstar/router"
+	"github.com/urfave/cli/v2"
 )
 
-var PGSTAR_SSL_CERTIFICATE = os.Getenv("PGSTAR_SSL_CERTIFICATE")
-var PGSTAR_SSL_PRIVATE_KEY = os.Getenv("PGSTAR_SSL_PRIVATE_KEY")
-var PGSTAR_POSTGRES_CONFIG = os.Getenv("PGSTAR_POSTGRES_CONFIG")
+var Command = &cli.Command{
+	Name:  "server",
+	Usage: "Start a server with the specified configuration file",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:    "bind-addr",
+			Usage:   "Path to the optional configuration file",
+			EnvVars: []string{"PGSTAR_BIND_ADDR"},
+			Value:   "127.0.0.1:5000",
+		},
+		&cli.StringFlag{
+			Name:     "postgres-config",
+			Usage:    "Connection string for postgres connection",
+			EnvVars:  []string{"PGSTAR_POSTGRES_CONFIG"},
+			Required: true,
+		},
+		&cli.StringFlag{
+			Name:    "ssl-cert",
+			Usage:   "Certificate for enabling SSL",
+			EnvVars: []string{"PGSTAR_SSL_CERTIFICATE"},
+		},
+		&cli.StringFlag{
+			Name:    "ssl-key",
+			Usage:   "Private key to enable SSL",
+			EnvVars: []string{"PGSTAR_SSL_PRIVATE_KEY"},
+		},
+	},
+	Action: main,
+}
+
 var server = &http.Server{
-	Addr:    CoalesceEnv("PGSTAR_BIND_ADDR", "127.0.0.1:5000"),
 	Handler: nil,
 }
 
-func CoalesceEnv(varname, fallback string) string {
-	value := os.Getenv(varname)
-	if value != "" {
-		return value
+func main(c *cli.Context) error {
+	if c.Args().Len() != 1 {
+		return fmt.Errorf("you must provide a path to the configuration file")
 	}
-	return fallback
-}
-
-func main() {
-	if len(os.Args) < 2 {
-		log.Fatalf("script file must be provided as argument")
-	}
-	starfile := os.Args[1]
+	server.Addr = c.String("bind-addr")
+	PGSTAR_POSTGRES_CONFIG := c.String("postgres-config")
+	PGSTAR_SSL_CERTIFICATE := c.String("ssl-cert")
+	PGSTAR_SSL_PRIVATE_KEY := c.String("ssl-key")
+	starfile := c.Args().Get(0)
 
 	// Postgres connection pool setup.
-	// The connection pool is configured via environment variable.
-	// Example: export PGSTAR_POSTGRES_CONFIG="host=localhost port=5433 user=yugabyte password=yugabyte database=mydatabase sslmode=disable"
 	dbpool, err := pgxpool.New(context.Background(), PGSTAR_POSTGRES_CONFIG)
 	if err != nil {
-		log.Fatalf("Unable to create connection pool: %v\n", err)
+		return fmt.Errorf("unable to create connection pool: %v", err)
 	}
 	defer dbpool.Close()
 
@@ -47,7 +68,7 @@ func main() {
 
 	// Ping the database to verify the connection
 	if err := dbpool.Ping(context.Background()); err != nil {
-		log.Fatalf("failed to ping database: %s", err)
+		return fmt.Errorf("failed to ping database: %s", err)
 	}
 
 	// load initial configuration
@@ -65,6 +86,8 @@ func main() {
 			log.Printf("HTTP server error: %v\n", err)
 		}
 	}
+
+	return nil
 }
 
 func loadConfig(starfile string) {

@@ -22,9 +22,14 @@ type Config struct {
 	routes     []route
 	globals    map[string]starlark.Value
 	pprofRoute string
+	options    []WithOption
 }
 
-func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
+type WithOption interface {
+	Apply(*executor.ManagedThread) error
+}
+
+func ConfigureAndBuildRouter(starscript string, opts ...WithOption) (*mux.Router, error) {
 	// script might be temporarily unavailable due to how some editors handle writes
 	if err := waitForFile(starscript, configFileTimeout); err != nil {
 		return nil, err
@@ -32,6 +37,7 @@ func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
 
 	cfg := &Config{
 		rootdir: filepath.Dir(starscript),
+		options: opts,
 	}
 	thread := executor.NewManagedThread(cfg.rootdir, filepath.Base(starscript))
 	thread.Predeclare("getEnv", starlark.NewBuiltin("getEnv", cfg.GetEnv))
@@ -39,6 +45,10 @@ func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
 	thread.Predeclare("addRoute", starlark.NewBuiltin("addRoute", cfg.AddRoute))
 	thread.Predeclare("enableProfilerRoute", starlark.NewBuiltin("enableProfilerRoute", cfg.EnableProfilerRoute))
 	thread.SetModuleLoader(executor.NewModuleLoader(thread, thread.GetRootdir(), thread.GetStarfile()))
+
+	for i := range opts {
+		opts[i].Apply(thread)
+	}
 
 	_, err := thread.Exec()
 	if err != nil {
@@ -51,7 +61,7 @@ func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
 func (cfg *Config) BuildRouter() *mux.Router {
 	router := mux.NewRouter()
 	for _, route := range cfg.routes {
-		router.HandleFunc(route.Path, WithStarlark(cfg.rootdir, route.Script, cfg.globals)).Methods(route.Methods...)
+		router.HandleFunc(route.Path, WithStarlarkHandler(cfg.rootdir, route.Script, cfg.globals, cfg.options...)).Methods(route.Methods...)
 	}
 
 	// enable pprof for Go debugging
@@ -73,6 +83,10 @@ func (cfg *Config) BuildRouter() *mux.Router {
 	}
 
 	return router
+}
+
+func (cfg *Config) NullFn(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	return starlark.None, nil
 }
 
 func (cfg *Config) GetEnv(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {

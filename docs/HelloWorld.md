@@ -39,12 +39,11 @@ vars = http.vars()
 name = vars["name"]
 path = vars["path"]
 
-
 # simply return a 201 status and write the name
 print(http.write(201, name)
 ```
 
 Finally start PGStar:
 ```shell
-pgstar ./config.star
+pgstar server ./config.star
 ```
