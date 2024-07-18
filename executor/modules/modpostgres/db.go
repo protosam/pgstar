@@ -146,7 +146,7 @@ func (module *Module) first(thread *starlark.Thread, fn *starlark.Builtin, args 
 		return starlark.None, err
 	}
 
-	defer rows.rows.Close()
+	defer rows.Iterate().Done()
 
 	if rows.rows.Next() {
 		values, _ := rows.rows.Values()

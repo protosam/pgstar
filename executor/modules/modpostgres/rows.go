@@ -2,7 +2,6 @@ package modpostgres
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/jackc/pgx/v5"
 	"go.starlark.net/starlark"
@@ -47,7 +46,6 @@ func (it *Row) Next(p *starlark.Value) bool {
 	if it.rows.Next() {
 		values, _ := it.rows.Values()
 		*p = parseRow(values, it.fields)
-		log.Printf("%#v", p)
 		return true
 	}
 	return false
