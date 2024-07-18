@@ -234,22 +234,29 @@ regex.match(pattern, string)
 ```starlark
 load("pgstar/encoding/hex", hex="exports")
 
-hex.encode(data)
-hex.decode(encodedData)
-```
-## pgstar/encoding/json
-```starlark
-load("pgstar/encoding/json", json="exports")
-
-json.encode(data)
-json.decode(encodedData)
+encodedData = hex.encode(data)
+stringData, err = hex.decode(encodedData)
 ```
 ## pgstar/encoding/base64
 ```starlark
 load("pgstar/encoding/base64", base64="exports")
 
-base64.encode(data)
-base64.decode(encodedData)
+encodedData = base64.encode(data)
+stringData, err = base64.decode(encodedData)
+```
+## pgstar/encoding/json
+```starlark
+load("pgstar/encoding/json", json="exports")
+
+jsonString, err = json.encode(data)
+jsonData, err = json.decode(jsonString)
+```
+## pgstar/encoding/yaml
+```starlark
+load("pgstar/encoding/json", json="exports")
+
+yamlString, err = yaml.encode(data)
+yamlData, err = yaml.decode(yamlString)
 ```
 ## pgstar/crypto/sha2
 ```starlark
