@@ -1,8 +1,10 @@
 package modjson
 
 import (
+	"fmt"
+
 	"github.com/protosam/pgstar/executor/modules"
-	starlarkjson "go.starlark.net/lib/json"
+	"github.com/protosam/pgstar/executor/modules/starutils"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 )
@@ -22,11 +24,8 @@ func (module *Module) Exports() starlark.StringDict {
 		"exports": starlarkstruct.FromStringDict(
 			starlark.String(ModuleName),
 			starlark.StringDict{
-				"encode": starlarkjson.Module.Members["encode"],
-				"decode": starlarkjson.Module.Members["decode"],
-				// "savepoints": starlark.NewBuiltin("db.savepoints", module.savepoints),
-				// "query":      starlark.NewBuiltin("db.query", module.query),
-				// "exec":       starlark.NewBuiltin("db.exec", module.exec),
+				"encode": starlark.NewBuiltin("json.encode", encode),
+				"decode": starlark.NewBuiltin("json.decode", decode),
 			},
 		),
 	}
@@ -36,4 +35,50 @@ func (module *Module) Destroy(loader modules.ModuleLoader) error { return nil }
 
 func (module *Module) Name() string {
 	return ModuleName
+}
+
+func encode(_ *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	var x starlark.Value
+	if err := starlark.UnpackPositionalArgs(b.Name(), args, kwargs, 1, &x); err != nil {
+		return nil, err
+	}
+
+	jsonString, err := starutils.StarlarkJsonEncoder(x)
+	if err != nil {
+		return starlark.Tuple{
+			starlark.None,
+			starlark.String(fmt.Sprintf("%s", err)),
+		}, nil
+	}
+
+	return starlark.Tuple{
+		starlark.String(jsonString),
+		starlark.None,
+	}, nil
+}
+
+func decode(_ *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (v starlark.Value, err error) {
+	var s string
+	var d starlark.Value
+	if err := starlark.UnpackArgs(b.Name(), args, kwargs, "x", &s, "default?", &d); err != nil {
+		return nil, err
+	}
+	if len(args) < 1 {
+		// "x" parameter is positional only; UnpackArgs does not allow us to
+		// directly express "def decode(x, *, default)"
+		return nil, fmt.Errorf("%s: unexpected keyword argument x", b.Name())
+	}
+
+	decoded, err := starutils.StarlarkJsonDecoder(s, d)
+	if err != nil {
+		return starlark.Tuple{
+			starlark.None,
+			starlark.String(fmt.Sprintf("%s", err)),
+		}, nil
+	}
+
+	return starlark.Tuple{
+		decoded,
+		starlark.None,
+	}, nil
 }
