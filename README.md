@@ -23,6 +23,9 @@ Instructions can be found in the `docs/` directory.
 - [Hello World Example](docs/HelloWorld.md)
 - [Module Details](docs/Modules.md)
 
+The following sample code is available as well.
+- [pgstar-user-service](https://github.com/protosam/pgstar-user-service)
+
 ## Design Choices
 - Starlark was chosen because it is a configuration language and resembles Python.
 - Functions shall panic only when a system issue occurs and pass all other errors back to be handled in a tuple.
