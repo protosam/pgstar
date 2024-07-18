@@ -95,7 +95,6 @@ func main(c *cli.Context) error {
 		}
 		request.Header.Add(headerNameValue[0], headerNameValue[1])
 	}
-	fmt.Printf("%#v", request.Header)
 
 	// Postgres connection pool setup.
 	dbpool, err := pgxpool.New(context.Background(), PGSTAR_POSTGRES_CONFIG)
