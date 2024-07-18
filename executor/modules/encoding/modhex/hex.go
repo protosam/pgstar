@@ -2,6 +2,7 @@ package modhex
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/protosam/pgstar/executor/modules"
 	"go.starlark.net/starlark"
@@ -53,8 +54,14 @@ func hexDecode(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tupl
 
 	byteSlice, err := hex.DecodeString(data)
 	if err != nil {
-		return nil, err
+		return starlark.Tuple{
+			starlark.None,
+			starlark.String(fmt.Sprintf("%s", err)),
+		}, nil
 	}
 
-	return starlark.String(byteSlice), nil
+	return starlark.Tuple{
+		starlark.String(byteSlice),
+		starlark.None,
+	}, nil
 }

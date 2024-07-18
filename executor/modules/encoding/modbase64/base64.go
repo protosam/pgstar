@@ -2,6 +2,7 @@ package modbase64
 
 import (
 	"encoding/base64"
+	"fmt"
 
 	"github.com/protosam/pgstar/executor/modules"
 	"go.starlark.net/starlark"
@@ -53,8 +54,14 @@ func base64Decode(thread *starlark.Thread, fn *starlark.Builtin, args starlark.T
 
 	byteSlice, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return nil, err
+		return starlark.Tuple{
+			starlark.None,
+			starlark.String(fmt.Sprintf("%s", err)),
+		}, nil
 	}
 
-	return starlark.String(byteSlice), nil
+	return starlark.Tuple{
+		starlark.String(byteSlice),
+		starlark.None,
+	}, nil
 }
