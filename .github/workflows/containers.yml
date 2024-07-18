@@ -10,7 +10,6 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
-  GITHUB_REF_NAME: ${{ GITHUB_REF_NAME }}
 
 jobs:
   build:
@@ -51,7 +50,7 @@ jobs:
           prefix=
           suffix=
         tags: |
-          type=semver,pattern={{raw}},value=${{ env.GITHUB_REF_NAME }}
+          type=semver,pattern={{raw}},value=${{ github.ref_name }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
