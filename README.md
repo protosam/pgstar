@@ -47,3 +47,4 @@ These are things slated to be added to PGStar.
 - - Custom log level support
 - - Override print's default level from INFO
 - - Output to STDOUT or log file.
+- Identify and implement strategy for test coverage
