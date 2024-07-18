@@ -50,7 +50,7 @@ jobs:
           prefix=
           suffix=
         tags: |
-          type=semver,pattern={{raw}},value=${GITHUB_REF_NAME}
+          type=semver,pattern={{raw}},value=${{GITHUB_REF_NAME}}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
