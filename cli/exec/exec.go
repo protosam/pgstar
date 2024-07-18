@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/protosam/pgstar/cli/customerrors"
@@ -22,6 +23,10 @@ var Command = &cli.Command{
 		&cli.StringFlag{
 			Name:  "json-data",
 			Usage: "JSON Encoded data to be passed in request",
+		},
+		&cli.StringSliceFlag{
+			Name:  "header",
+			Usage: "Headers to use, this can be passed multiple times.",
 		},
 		&cli.BoolFlag{
 			Name:  "no-print",
@@ -49,6 +54,7 @@ func main(c *cli.Context) error {
 	PGSTAR_POSTGRES_CONFIG := c.String("postgres-config")
 	noPrint := c.Bool("no-print")
 	jsonDataStr := c.String("json-data")
+	headers := c.StringSlice("headers")
 	starfile := c.Args().Get(0)
 	method := c.Args().Get(1)
 	path := c.Args().Get(2)
@@ -80,6 +86,14 @@ func main(c *cli.Context) error {
 			return err
 		}
 		request = req
+	}
+
+	for i := range headers {
+		headerNameValue := strings.SplitN(headers[i], "=", 2)
+		if len(headerNameValue) != 2 {
+			return fmt.Errorf("invalid header flag value: %s", headers[i])
+		}
+		request.Header.Add(headerNameValue[0], headerNameValue[1])
 	}
 
 	// Postgres connection pool setup.
