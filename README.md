@@ -31,16 +31,11 @@ Instructions can be found in the `docs/` directory.
 ## Development Plan Notes
 These are things slated to be added to PGStar.
 
-- Review and revise existing modules to ensure non-system errors are available for starlark scripts to handle
-- - All of the encoding modules need this change
-- - Need to vet remaining modules
-- Implement a yaml module
 - Implement pprof module
 - Implement CLI tooling to simply scripts without web service
 - Implement package management system (using git repos)
 - - Versioning structure
 - - Caching mechanisms
-- Implement docker builds
 - Implement schema management tooling (with plain sql files)
 - Implement logging module
 - - Default log levels: DEBUG, INFO, ERROR, WARNING, DEPRECATED
