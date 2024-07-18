@@ -8,6 +8,7 @@ This only covers the built-ins available in PGStar. The language specification i
 
 - `print(message str)` - Logs to standard output.
 - `addRoute(method []str, path str, scriptFile str)` - Only available during configuration, used to configure routes.
+- `enableProfilerRoute(pprofRoute str)` - Only available during configuration, enables pprof data at specified route path.
 - `setGlobal(name string, value any)` - Only available during configuration, used to set a global variable for other scripts to consume.
 - `getEnv(name string, default any)` - Only available during configuration, used to get environment variables prefixed with `PGSTAR_ENV`.
 

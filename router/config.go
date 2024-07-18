@@ -1,23 +1,15 @@
 package router
 
 import (
-	"errors"
 	"fmt"
-	"log"
-	"net/http"
+	"net/http/pprof"
 	"os"
 	"path/filepath"
 
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/protosam/pgstar/executor"
-	"github.com/protosam/pgstar/executor/modules"
-	"github.com/protosam/pgstar/executor/modules/modhttp"
-	"github.com/protosam/pgstar/executor/modules/modpostgres"
 	"go.starlark.net/starlark"
 )
-
-var dbpool *pgxpool.Pool
 
 type route struct {
 	Methods []string
@@ -26,16 +18,18 @@ type route struct {
 }
 
 type Config struct {
-	rootdir string
-	routes  []route
-	globals map[string]starlark.Value
-}
-
-func SetDBPool(pool *pgxpool.Pool) {
-	dbpool = pool
+	rootdir    string
+	routes     []route
+	globals    map[string]starlark.Value
+	pprofRoute string
 }
 
 func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
+	// script might be temporarily unavailable due to how some editors handle writes
+	if err := waitForFile(starscript, configFileTimeout); err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
 		rootdir: filepath.Dir(starscript),
 	}
@@ -43,6 +37,7 @@ func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
 	thread.Predeclare("getEnv", starlark.NewBuiltin("getEnv", cfg.GetEnv))
 	thread.Predeclare("setGlobal", starlark.NewBuiltin("setGlobal", cfg.SetGlobal))
 	thread.Predeclare("addRoute", starlark.NewBuiltin("addRoute", cfg.AddRoute))
+	thread.Predeclare("enableProfilerRoute", starlark.NewBuiltin("enableProfilerRoute", cfg.EnableProfilerRoute))
 	thread.SetModuleLoader(executor.NewModuleLoader(thread, thread.GetRootdir(), thread.GetStarfile()))
 
 	_, err := thread.Exec()
@@ -53,37 +48,30 @@ func ConfigureAndBuildRouter(starscript string) (*mux.Router, error) {
 	return cfg.BuildRouter(), nil
 }
 
-func withStarlark(rootdir, starfile string, globals map[string]starlark.Value) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		thread := executor.NewManagedThread(rootdir, starfile)
-		moduleloader := executor.NewModuleLoader(thread, thread.GetRootdir(), thread.GetStarfile())
-		moduleloader.SetState(modpostgres.StateNameDBPool, dbpool)
-		moduleloader.SetState(modhttp.StateNameReader, r)
-		moduleloader.SetState(modhttp.StateNameWriter, &w)
-		thread.SetModuleLoader(moduleloader)
-
-		for name, value := range globals {
-			thread.Predeclare(name, value)
-		}
-
-		defer moduleloader.Destroy()
-		if _, err := thread.Exec(); err != nil {
-			if !errors.Is(err, modules.ErrEarlyExit) {
-				log.Printf("%s: error: %s", thread.Name, err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-}
-
 func (cfg *Config) BuildRouter() *mux.Router {
 	router := mux.NewRouter()
 	for _, route := range cfg.routes {
-		router.HandleFunc(route.Path, withStarlark(cfg.rootdir, route.Script, cfg.globals)).Methods(route.Methods...)
+		router.HandleFunc(route.Path, WithStarlark(cfg.rootdir, route.Script, cfg.globals)).Methods(route.Methods...)
 	}
+
+	// enable pprof for Go debugging
+	if cfg.pprofRoute != "" {
+		pprofRouter := router.PathPrefix(cfg.pprofRoute).Subrouter()
+
+		// Add pprof routes to the subrouter
+		pprofRouter.HandleFunc("/", pprof.Index)
+		pprofRouter.HandleFunc("/cmdline", pprof.Cmdline)
+		pprofRouter.HandleFunc("/profile", pprof.Profile)
+		pprofRouter.HandleFunc("/symbol", pprof.Symbol)
+		pprofRouter.HandleFunc("/trace", pprof.Trace)
+
+		// These three routes are automatically added by pprof.Index, but if you need them explicitly:
+		pprofRouter.Handle("/goroutine", pprof.Handler("goroutine"))
+		pprofRouter.Handle("/heap", pprof.Handler("heap"))
+		pprofRouter.Handle("/threadcreate", pprof.Handler("threadcreate"))
+		pprofRouter.Handle("/block", pprof.Handler("block"))
+	}
+
 	return router
 }
 
@@ -144,5 +132,12 @@ func (cfg *Config) AddRoute(thread *starlark.Thread, fn *starlark.Builtin, args 
 		Script:  script,
 	})
 
+	return starlark.None, nil
+}
+
+func (cfg *Config) EnableProfilerRoute(thread *starlark.Thread, fn *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	if err := starlark.UnpackArgs(fn.Name(), args, kwargs, "pprofRoute", &cfg.pprofRoute); err != nil {
+		return starlark.None, err
+	}
 	return starlark.None, nil
 }

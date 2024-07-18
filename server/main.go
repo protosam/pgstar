@@ -102,7 +102,7 @@ func configReloader(starfile string) {
 			}
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				log.Printf("configuration updated")
-				loadConfig("example/config.star")
+				loadConfig(starfile)
 			}
 		case err, ok := <-watcher.Errors:
 			if !ok {
