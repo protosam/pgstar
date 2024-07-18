@@ -21,9 +21,10 @@ rows, err = db.query("SELECT * FROM testtable WHERE name = $1", ["alice"])
 if err != None:
     pass # TODO: Handle error
 
-# iterate all selected rows
-for row in rows:
-    print(row)
+# retreive only the first row, is None if no row returned
+alice = db.first(rows)
+print(alice)
+
 
 # automatic savepointing can be enabled to automate rollbacks
 # errors can not be handled without this enabled
