@@ -27,10 +27,18 @@ Here is the full list of environment variables available for the `pgstar` comman
 
 
 ## Building
-This project requires Go to be built.
-```
+Build with Go locally.
+```shell
 go build -o pgstar github.com/protosam/pgstar/server
 ```
 
+Building a container.
+```shell
+docker build . -t <TAGNAME_HERE>
+```
+
 ## Docker Containers
-TODO: Release `amd64` and `aarch64` containers for `v0.1.0-alpha`.
+Docker containers are available and tagged by version.
+```shell
+docker pull ghcr.io/protosam/pgstar:v0.0.1-alpha
+```
