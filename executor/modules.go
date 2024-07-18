@@ -10,6 +10,7 @@ import (
 	"github.com/protosam/pgstar/executor/modules/encoding/modbase64"
 	"github.com/protosam/pgstar/executor/modules/encoding/modhex"
 	"github.com/protosam/pgstar/executor/modules/encoding/modjson"
+	"github.com/protosam/pgstar/executor/modules/encoding/modyaml"
 	"github.com/protosam/pgstar/executor/modules/modhttp"
 	"github.com/protosam/pgstar/executor/modules/modmath"
 	"github.com/protosam/pgstar/executor/modules/modpostgres"
@@ -31,4 +32,5 @@ var Modules = map[string]modules.ModuleExporterFn{
 	"pgstar/encoding/base64": modbase64.Constructor,
 	"pgstar/encoding/hex":    modhex.Constructor,
 	"pgstar/encoding/json":   modjson.Constructor,
+	"pgstar/encoding/yaml":   modyaml.Constructor,
 }
